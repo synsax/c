@@ -28,6 +28,7 @@ void mvEnemy(enemy *e) {
     int dx = rand()%2 ? rand()%2 : (rand()%2)*-1;
     int dy = rand()%2 ? rand()%2 : (rand()%2)*-1;
     map[e->y][e->x] = ' ';
+    mvaddch(e->y,e->x,' ');
     e->x += dx;
     e->y += dy;
     if(judge(e->x,e->y) == '#') {
@@ -48,7 +49,6 @@ void initMap() {
 }
 
 void draw() {
-    erase();
     int i,j;
     for(i=0;i<HEIGHT;i++) {
         for(j=0;j<WIDTH;j++) {
@@ -94,9 +94,12 @@ int main()
 
     srand((unsigned)time(NULL));
 
-    int score = 0;
     int isEnded = 0;
 
+    int score = 0;
+    move(1,1);
+    printw("Score : %d",score);
+    
     initMap();
     
     char *st[] = {
@@ -117,10 +120,6 @@ int main()
 
     int x = 20, y = 10;
     draw();
-
-    move(1,1);
-    printw("Score : %d",score);
-
     mvaddch(y,x,'@');
 
     while(1) {
@@ -145,9 +144,10 @@ int main()
                 break;
             }
         }
+        mvaddch(y, x, ' ');
         mvEnemy(&e);
         x += dx; y += dy;
-        if(judge(x,y) == '#') {
+        if(inch() == '#') {
             x-=dx; y-=dy;
         }
         if(judge(x,y) == '$') {
