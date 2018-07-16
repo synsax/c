@@ -13,26 +13,35 @@ char map[HEIGHT][WIDTH];
 typedef struct {
     int x, y;
     char c;
+    int isGetted;
 }enemy;
-
-char judge(int x, int y);
 
 void setEnemy(enemy *e, const char c, int x, int y) {
     e->c = c;
     e->x = x;
     e->y = y;
+    e->isGetted = 0;
     map[y][x] = c;
 }
 
 void mvEnemy(enemy *e) {
     int dx = rand()%2 ? rand()%2 : (rand()%2)*-1;
     int dy = rand()%2 ? rand()%2 : (rand()%2)*-1;
-    map[e->y][e->x] = ' ';
+    if(e->isGetted) {
+        map[e->y][e->x] = '$';
+        e->isGetted = 0;
+    }
+    else {
+        map[e->y][e->x] = ' ';
+    }
     e->x += dx;
     e->y += dy;
-    if(judge(e->x,e->y) == '#') {
+    if(map[e->y][e->x] == '#') {
         e->x -= dx;
         e->y -= dy;
+    }
+    if(map[e->y][e->x] == '$') {
+        e->isGetted = 1;
     }
     map[e->y][e->x] = e->c;
 }
@@ -70,21 +79,6 @@ void setup(char *st[], int len, int x, int y) {
     }
 }
 
-char judge(int x, int y) {
-    char m = map[y][x];
-    if(m == '#') {
-        return '#';
-    }
-    if(m == '$') {
-        return '$';
-    }
-    if(m == '<') {
-        return '<';
-    }
-
-    return 0;
-}
-
 int main()
 {
     WINDOW *win = initscr();
@@ -92,10 +86,13 @@ int main()
     cbreak(); // Deterrence buffuring
     keypad(win, TRUE); // Use cursor keys
 
+RESTART:
+
     srand((unsigned)time(NULL));
 
     int score = 0;
     int isEnded = 0;
+    int isCleared = 0;
 
     initMap();
     
@@ -145,16 +142,18 @@ int main()
                 break;
             }
         }
-        mvEnemy(&e);
         x += dx; y += dy;
-        if(judge(x,y) == '#') {
+        mvEnemy(&e);
+        if(map[y][x] == '#') {
             x-=dx; y-=dy;
         }
-        if(judge(x,y) == '$') {
+        if(map[y][x] == '$') {
             score++;
             map[y][x] = ' ';
+            int _x = score%2 ? 11 : -11;
+            map[y][x+_x] = '$';
         }
-        if(judge(x,y) == e.c) {
+        if(map[y][x] == e.c) {
             isEnded = 1;
             break;
         }
@@ -164,11 +163,22 @@ int main()
         mvaddch(y, x, '@');
     }
 
-    while(isEnded) {
+    if(isEnded) {
         clear();
-        move(15,40);
+        move(13,43);
+        printw("Score : %d", score);
+        move(15,43);
         printw("Game Over");
+        move(18,40);
+        printw("[r]estart [e]nd");
+    }
+    while(isEnded) {
         int i = wgetch(win);
+        if(i == 'e') break;
+        else if(i == 'r') {
+            clear();
+            goto RESTART;
+        }
     }
     endwin();
     return 0;
